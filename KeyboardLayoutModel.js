@@ -114,9 +114,38 @@ function layoutIndex(keyboard) {
   return (keyboard && keyboard.active_layout_index) || 0
 }
 
+// The layout id Hyprland is actually using. active_keymap is a description
+// ("English (US)"), so US and UK English cannot be told apart from it. The
+// comma-separated layout list plus the active index can. Index 0 is a real
+// selection, not a missing one.
+function activeLayoutId(keyboard) {
+  if (!keyboard) return ""
+
+  var layouts = String(keyboard.layout || "").split(",")
+  var index = Number(keyboard.active_layout_index)
+  if (!isFinite(index) || index < 0) index = 0
+  index = Math.floor(index)
+  if (index >= layouts.length) return ""
+  return String(layouts[index] || "").trim()
+}
+
+// Layout ids that correspond to a shipped flag file. A language with no
+// country, or a country we did not vendor, stays a text label.
+var FLAG_BY_LAYOUT = {
+  us: "us",
+  ru: "ru"
+}
+
+function flagName(layoutId) {
+  var name = FLAG_BY_LAYOUT[String(layoutId || "")]
+  return typeof name === "string" ? name : ""
+}
+
 if (typeof module !== "undefined") {
   module.exports = {
+    activeLayoutId: activeLayoutId,
     eventKeyboardName: eventKeyboardName,
+    flagName: flagName,
     isTypedKeyboard: isTypedKeyboard,
     layoutBriefs: layoutBriefs,
     selectKeyboard: selectKeyboard,

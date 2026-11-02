@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
@@ -12,6 +13,9 @@ BarWidget {
 
 
   property string layoutFull: ""
+  // xkb layout id of the keymap above ("us", "ru"), from the layout list rather
+  // than the description. Empty when the seat has not named one.
+  property string layoutId: ""
   // The keyboard the last reading spoke for, which is the one a click switches,
   // and separately the one activelayout named as being typed on. A reading
   // confirms the first is really there, so the click has a keyboard to reach
@@ -140,6 +144,7 @@ BarWidget {
           root.keyboardUnresolved = true
           if (typed.length === 0) {
             root.layoutFull = ""
+            root.layoutId = ""
             root.keyboardName = ""
           }
           return
@@ -150,6 +155,7 @@ BarWidget {
         root.keyboardName = String(kb.name || "")
         root.multipleLayouts = kb.layout === undefined || String(kb.layout).indexOf(",") !== -1
         root.layoutFull = kb.active_keymap
+        root.layoutId = KeyboardLayoutModel.activeLayoutId(kb)
       }
     }
   }
@@ -226,7 +232,21 @@ BarWidget {
   // pair of different numbers has to place the caption itself.
   readonly property bool splitHorizontalMargin: !(bar && bar.vertical) && marginRaw(0) !== marginRaw(1)
 
-  implicitWidth: splitHorizontalMargin ? Math.max(12, caption.implicitWidth + marginLeft + marginRight) : button.implicitWidth
+  // "rect", "rounded", or "circle". Any other value is a plain rectangle.
+  property string flagShape: "rect"
+  readonly property string resolvedFlagShape: flagShape === "rounded" || flagShape === "circle" ? flagShape : "rect"
+  readonly property string flagFile: KeyboardLayoutModel.flagName(layoutId)
+  readonly property bool flagCircle: resolvedFlagShape === "circle"
+  readonly property bool flagRounded: resolvedFlagShape === "rounded"
+  readonly property real flagHeight: Style.font.title
+  readonly property real flagWidth: flagCircle ? flagHeight : flagHeight * 4 / 3
+  readonly property url flagSource: flagFile !== "" ? Qt.resolvedUrl("flags/" + (flagCircle ? "circle" : "rect") + "/" + flagFile + ".svg") : ""
+  // A missing file reports Error and the text label takes the slot back. A
+  // vertical bar keeps the button's own label; the flag is a horizontal mark.
+  readonly property bool showFlag: flagFile !== "" && !(bar && bar.vertical) && flagImage.status !== Image.Error
+  readonly property bool customSlot: showFlag || splitHorizontalMargin
+
+  implicitWidth: customSlot ? Math.max(12, (showFlag ? flagWidth : caption.implicitWidth) + marginLeft + marginRight) : button.implicitWidth
   implicitHeight: button.implicitHeight
 
   WidgetButton {
@@ -235,14 +255,14 @@ BarWidget {
     bar: root.bar
     text: root.layoutLabel
     fontSize: Style.font.title
-    horizontalMargin: root.splitHorizontalMargin ? 0 : root.marginRaw(0)
-    labelVisible: !root.splitHorizontalMargin
+    horizontalMargin: root.customSlot ? 0 : root.marginRaw(0)
+    labelVisible: !root.customSlot
     tooltipText: root.layoutFull
     onPressed: function() { root.cycleLayout() }
 
     Text {
       id: caption
-      visible: root.splitHorizontalMargin
+      visible: root.splitHorizontalMargin && !root.showFlag
       x: root.marginLeft
       anchors.verticalCenter: parent.verticalCenter
       text: button.text
@@ -255,6 +275,50 @@ BarWidget {
       Behavior on color {
         enabled: !button.bar || button.bar.foregroundAnimationEnabled
         ColorAnimation { duration: 160 }
+      }
+    }
+
+    Item {
+      id: flagSlot
+      visible: root.showFlag
+      x: root.marginLeft
+      anchors.verticalCenter: parent.verticalCenter
+      width: root.flagWidth
+      height: root.flagHeight
+
+      // The mask has to stay visible: a hidden item never fills its layer, and
+      // the effect then has nothing to sample. The picture is the same size and
+      // covers this rectangle, so only the rounded-off corners show the bar.
+      Rectangle {
+        id: flagMask
+        anchors.fill: parent
+        radius: Math.min(Style.spaceReal(3), width / 2, height / 2)
+        visible: root.flagRounded
+        layer.enabled: root.flagRounded
+        color: "white"
+      }
+
+      Item {
+        anchors.fill: parent
+        layer.enabled: root.flagRounded
+        layer.smooth: true
+        layer.effect: MultiEffect {
+          maskEnabled: root.flagRounded
+          maskSource: flagMask
+          maskThresholdMin: 0.3
+          maskSpreadAtMin: 0.3
+        }
+
+        Image {
+          id: flagImage
+          anchors.fill: parent
+          source: root.flagSource
+          fillMode: Image.PreserveAspectFit
+          smooth: true
+          cache: true
+          sourceSize.width: Math.round(width * Screen.devicePixelRatio)
+          sourceSize.height: Math.round(height * Screen.devicePixelRatio)
+        }
       }
     }
   }
