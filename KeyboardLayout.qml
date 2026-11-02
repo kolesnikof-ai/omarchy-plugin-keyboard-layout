@@ -212,14 +212,19 @@ BarWidget {
   // Unscaled pixels. One number pads both sides. Two numbers set the left and
   // the right inset on their own, as a list ([16, 0]) or a string ("16 0").
   // The live values come from this widget's entry in shell.json.
-  property var horizontalMargin: setting("horizontalMargin", [6, 6])
+  // Named apart from WidgetButton.horizontalMargin: that property is a single
+  // real, and sharing the name lets its 0 binding overwrite this list.
+  property var marginValue: setting("horizontalMargin", [6, 6])
 
-  function marginRaw(side) {
-    const value = horizontalMargin
+  // The value has to be an argument. Reading it only inside the function does
+  // not subscribe the binding, so the insets stay 0 after shell.json arrives.
+  function marginNumber(value, side) {
     let parts = []
     if (Array.isArray(value)) parts = value
     else if (typeof value === "string") parts = value.trim().split(/\s+/)
-    else parts = [value]
+    else if (value && typeof value.length === "number") {
+      for (let i = 0; i < value.length; i++) parts.push(value[i])
+    } else parts = [value]
 
     if (parts.length < 1 || parts[0] === "") return 0
     const raw = side === 0 || parts.length < 2 ? parts[0] : parts[1]
@@ -227,11 +232,11 @@ BarWidget {
     return isFinite(n) ? n : 0
   }
 
-  readonly property real marginLeft: Style.spaceReal(marginRaw(0))
-  readonly property real marginRight: Style.spaceReal(marginRaw(1))
-  // The button centers its label and pads both sides by the same amount, so a
-  // pair of different numbers has to place the caption itself.
-  readonly property bool splitHorizontalMargin: !(bar && bar.vertical) && marginRaw(0) !== marginRaw(1)
+  readonly property real marginLeft: Style.spaceReal(marginNumber(marginValue, 0))
+  readonly property real marginRight: Style.spaceReal(marginNumber(marginValue, 1))
+  // The button can only pad both sides by one number and then centers its
+  // label. On a horizontal bar the caption and the flag are placed explicitly,
+  // so equal insets such as [6, 6] stay on their own sides.
 
   // "flag" draws the country mark. "text" keeps the short language label.
   property string layoutDisplay: setting("layoutDisplay", "flag")
@@ -264,7 +269,7 @@ BarWidget {
   // A missing file reports Error and the text label takes the slot back. A
   // vertical bar keeps the button's own label; the flag is a horizontal mark.
   readonly property bool showFlag: displayFlag && flagFile !== "" && !(bar && bar.vertical) && flagImage.status !== Image.Error
-  readonly property bool customSlot: showFlag || splitHorizontalMargin
+  readonly property bool customSlot: !(bar && bar.vertical)
 
   implicitWidth: customSlot ? Math.max(12, (showFlag ? flagWidth : caption.implicitWidth) + marginLeft + marginRight) : button.implicitWidth
   implicitHeight: button.implicitHeight
@@ -275,14 +280,14 @@ BarWidget {
     bar: root.bar
     text: root.layoutLabel
     fontSize: root.fontSize
-    horizontalMargin: root.customSlot ? 0 : root.marginRaw(0)
+    horizontalMargin: root.customSlot ? 0 : root.marginNumber(root.marginValue, 0)
     labelVisible: !root.customSlot
     tooltipText: root.layoutFull
     onPressed: function() { root.cycleLayout() }
 
     Text {
       id: caption
-      visible: root.splitHorizontalMargin && !root.showFlag
+      visible: root.customSlot && !root.showFlag
       x: root.marginLeft
       anchors.verticalCenter: parent.verticalCenter
       text: button.text
