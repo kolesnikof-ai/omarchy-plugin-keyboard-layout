@@ -129,16 +129,13 @@ function activeLayoutId(keyboard) {
   return String(layouts[index] || "").trim()
 }
 
-// Layout ids that correspond to a shipped flag file. A language with no
-// country, or a country we did not vendor, stays a text label.
-var FLAG_BY_LAYOUT = {
-  us: "us",
-  ru: "ru"
-}
-
+// The flag file is flags/<shape>/<layout id>.svg. xkb layout ids match the
+// country codes in the shipped set (us, ru, gb, de, …). A language with no
+// country (Arabic, Esperanto, Latin American Spanish, Braille, custom) has
+// no file, and the widget keeps the text label when the image fails to load.
 function flagName(layoutId) {
-  var name = FLAG_BY_LAYOUT[String(layoutId || "")]
-  return typeof name === "string" ? name : ""
+  var name = String(layoutId || "").toLowerCase()
+  return /^[a-z0-9]+$/.test(name) ? name : ""
 }
 
 if (typeof module !== "undefined") {

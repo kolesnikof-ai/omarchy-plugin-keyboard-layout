@@ -232,6 +232,9 @@ BarWidget {
   // pair of different numbers has to place the caption itself.
   readonly property bool splitHorizontalMargin: !(bar && bar.vertical) && marginRaw(0) !== marginRaw(1)
 
+  // "flag" draws the country mark. "text" keeps the short language label.
+  property string layoutDisplay: "flag"
+  readonly property bool displayFlag: layoutDisplay !== "text"
   // "rect", "rounded", or "circle". Any other value is a plain rectangle.
   property string flagShape: "circle"
   readonly property string resolvedFlagShape: flagShape === "rounded" || flagShape === "circle" ? flagShape : "rect"
@@ -240,10 +243,10 @@ BarWidget {
   readonly property bool flagRounded: resolvedFlagShape === "rounded"
   readonly property real flagHeight: Style.font.title
   readonly property real flagWidth: flagCircle ? flagHeight : flagHeight * 4 / 3
-  readonly property url flagSource: flagFile !== "" ? Qt.resolvedUrl("flags/" + (flagCircle ? "circle" : "rect") + "/" + flagFile + ".svg") : ""
+  readonly property url flagSource: displayFlag && flagFile !== "" ? Qt.resolvedUrl("flags/" + (flagCircle ? "circle" : "rect") + "/" + flagFile + ".svg") : ""
   // A missing file reports Error and the text label takes the slot back. A
   // vertical bar keeps the button's own label; the flag is a horizontal mark.
-  readonly property bool showFlag: flagFile !== "" && !(bar && bar.vertical) && flagImage.status !== Image.Error
+  readonly property bool showFlag: displayFlag && flagFile !== "" && !(bar && bar.vertical) && flagImage.status !== Image.Error
   readonly property bool customSlot: showFlag || splitHorizontalMargin
 
   implicitWidth: customSlot ? Math.max(12, (showFlag ? flagWidth : caption.implicitWidth) + marginLeft + marginRight) : button.implicitWidth
