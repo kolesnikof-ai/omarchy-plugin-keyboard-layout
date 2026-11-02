@@ -211,7 +211,7 @@ BarWidget {
 
   // Unscaled pixels. One number pads both sides. Two numbers set the left and
   // the right inset on their own, as a list ([16, 0]) or a string ("16 0").
-  property var horizontalMargin: [12, 0]
+  property var horizontalMargin: [6, 6]
 
   function marginRaw(side) {
     const value = horizontalMargin
@@ -233,7 +233,7 @@ BarWidget {
   readonly property bool splitHorizontalMargin: !(bar && bar.vertical) && marginRaw(0) !== marginRaw(1)
 
   // "rect", "rounded", or "circle". Any other value is a plain rectangle.
-  property string flagShape: "rect"
+  property string flagShape: "circle"
   readonly property string resolvedFlagShape: flagShape === "rounded" || flagShape === "circle" ? flagShape : "rect"
   readonly property string flagFile: KeyboardLayoutModel.flagName(layoutId)
   readonly property bool flagCircle: resolvedFlagShape === "circle"
