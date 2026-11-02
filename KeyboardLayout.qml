@@ -211,7 +211,8 @@ BarWidget {
 
   // Unscaled pixels. One number pads both sides. Two numbers set the left and
   // the right inset on their own, as a list ([16, 0]) or a string ("16 0").
-  property var horizontalMargin: [6, 6]
+  // The live values come from this widget's entry in shell.json.
+  property var horizontalMargin: setting("horizontalMargin", [6, 6])
 
   function marginRaw(side) {
     const value = horizontalMargin
@@ -233,15 +234,31 @@ BarWidget {
   readonly property bool splitHorizontalMargin: !(bar && bar.vertical) && marginRaw(0) !== marginRaw(1)
 
   // "flag" draws the country mark. "text" keeps the short language label.
-  property string layoutDisplay: "flag"
+  property string layoutDisplay: setting("layoutDisplay", "flag")
   readonly property bool displayFlag: layoutDisplay !== "text"
   // "rect", "rounded", or "circle". Any other value is a plain rectangle.
-  property string flagShape: "circle"
+  property string flagShape: setting("flagShape", "circle")
+  // A shell font step: caption, body-small, body, subtitle, title, heading,
+  // display, display-large. The size follows the shell base. The flag matches it.
+  function fontTokenSize(name) {
+    switch (String(name || "")) {
+      case "caption": return Style.font.caption
+      case "body-small": return Style.font.bodySmall
+      case "body": return Style.font.body
+      case "subtitle": return Style.font.subtitle
+      case "title": return Style.font.title
+      case "heading": return Style.font.heading
+      case "display": return Style.font.display
+      case "display-large": return Style.font.displayLarge
+      default: return Style.font.title
+    }
+  }
+  property real fontSize: fontTokenSize(setting("fontSize", "title"))
   readonly property string resolvedFlagShape: flagShape === "rounded" || flagShape === "circle" ? flagShape : "rect"
   readonly property string flagFile: KeyboardLayoutModel.flagName(layoutId)
   readonly property bool flagCircle: resolvedFlagShape === "circle"
   readonly property bool flagRounded: resolvedFlagShape === "rounded"
-  readonly property real flagHeight: Style.font.title
+  readonly property real flagHeight: fontSize
   readonly property real flagWidth: flagCircle ? flagHeight : flagHeight * 4 / 3
   readonly property url flagSource: displayFlag && flagFile !== "" ? Qt.resolvedUrl("flags/" + (flagCircle ? "circle" : "rect") + "/" + flagFile + ".svg") : ""
   // A missing file reports Error and the text label takes the slot back. A
@@ -257,7 +274,7 @@ BarWidget {
     anchors.fill: parent
     bar: root.bar
     text: root.layoutLabel
-    fontSize: Style.font.title
+    fontSize: root.fontSize
     horizontalMargin: root.customSlot ? 0 : root.marginRaw(0)
     labelVisible: !root.customSlot
     tooltipText: root.layoutFull
