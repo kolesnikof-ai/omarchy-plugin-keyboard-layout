@@ -4,6 +4,8 @@
 
 Bar widget for the Omarchy shell. It shows the active XKB layout as a flag or a short language code. A click switches to the next layout.
 
+![Keyboard layout shown as a circular flag on the Omarchy bar](preview.png)
+
 This is a replacement for the built-in `omarchy.keyboard-layout` widget. Sergey Kolesnikov, based on Omarchy.
 
 ## Install
