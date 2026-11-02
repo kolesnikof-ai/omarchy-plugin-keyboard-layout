@@ -1,0 +1,14 @@
+# Quickshell / Qt
+*.qslog
+.qmlcache/
+*.qmlc
+*.jsc
+
+# OS and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+.directory
