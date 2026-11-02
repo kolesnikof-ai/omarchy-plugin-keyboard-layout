@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "kolesnikof.keyboard-layout",
-  "name": "My Keyboard layout",
+  "name": "Keyboard layout",
   "version": "1.0.0",
-  "author": "Omarchy",
-  "description": "Current xkb layout, click cycles",
+  "author": "Sergey Kolesnikov, based on Omarchy",
+  "description": "XKB layout indicator with a flag or language code. Click switches layout.",
   "kinds": [
     "bar-widget"
   ],
@@ -12,8 +12,8 @@
     "barWidget": "KeyboardLayout.qml"
   },
   "barWidget": {
-    "displayName": "My Keyboard layout",
-    "description": "Current xkb layout, click cycles",
+    "displayName": "Keyboard layout",
+    "description": "XKB layout indicator with a flag or language code. Click switches layout.",
     "category": "Compositor",
     "allowMultiple": false
   },
